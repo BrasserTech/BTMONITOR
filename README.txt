@@ -61,3 +61,6 @@ Siga estas instruções para configurar e rodar o projeto em sua máquina local.
 Para rodar a aplicação em modo de desenvolvimento, use o comando:
 ```bash
 npm start
+
+Para gerar a build
+npm run make
