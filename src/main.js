@@ -31,10 +31,12 @@ function horaLocal(iso) {
 
 // ---------------- Google Sheets (JSON) ----------------
 async function getSheetsClient() {
-  const keyFilePath = path.join(__dirname, '..', 'service-account.json');
-  if (!fs.existsSync(keyFilePath)) {
-    throw new Error('Arquivo service-account.json não encontrado na raiz do projeto.');
-  }
+  const tryPaths = [
+    path.join(__dirname, '..', 'service-account.json'),       // dev
+    path.join(process.resourcesPath || '', 'service-account.json'), // pacote
+  ];
+  const keyFilePath = tryPaths.find(p => p && fs.existsSync(p));
+  if (!keyFilePath) throw new Error('service-account.json não encontrado');
   const auth = new google.auth.GoogleAuth({
     keyFile: keyFilePath,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],

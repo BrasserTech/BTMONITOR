@@ -1,26 +1,23 @@
 {
   "name": "btmonitor-desktop",
+  "productName": "BTMonitor Desktop",
   "version": "1.0.0",
   "description": "Monitor de desktop para pedidos do Google Sheets.",
   "main": "src/main.js",
   "scripts": {
     "start": "electron-forge start",
-    "package": "electron-forge package",
     "make": "electron-forge make",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "package": "electron-forge package"
   },
-  "keywords": [],
-  "author": "Paulo H. De Morais",
-  "license": "ISC",
   "devDependencies": {
     "@electron-forge/cli": "^7.2.0",
-    "@electron-forge/maker-squirrel": "^7.2.0",
     "@electron-forge/maker-zip": "^7.2.0",
+    "@electron-forge/maker-squirrel": "^7.2.0",
     "electron": "^28.1.0"
   },
   "dependencies": {
-    "dotenv": "^17.2.1",
-    "electron-squirrel-startup": "^1.0.0",
-    "googleapis": "^159.0.0"
+    "dotenv": "^16.3.1",
+    "googleapis": "^131.0.0",
+    "electron-squirrel-startup": "^1.0.0"
   }
 }
