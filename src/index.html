@@ -6,20 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>BTMonitor Desktop</title>
   <style>
-    /* === Tema claro (branco + azul) === */
     :root{
-      --bg:#f7fafc;          /* fundo geral claro */
-      --panel:#ffffff;       /* cartões/tabelas */
-      --muted:#5b6b7f;       /* textos secundários */
-      --text:#0f172a;        /* texto principal */
-      --accent:#1d4ed8;      /* azul principal */
-      --accent-soft:#e8efff; /* azul muito claro */
-      --info:#2563eb;        /* azul info */
-      --ship:#0891b2;        /* ciano para "saiu para entrega" */
-      --ok:#16a34a;          /* verde */
-      --warn:#b45309;        /* âmbar escuro */
-      --border:#e5e7eb;      /* bordas */
-      --shadow: 0 10px 25px rgba(15,23,42,.08);
+      --bg:#f7fafc; --panel:#ffffff; --muted:#5b6b7f; --text:#0f172a;
+      --accent:#1d4ed8; --accent-soft:#e8efff; --info:#2563eb; --ship:#0891b2;
+      --ok:#16a34a; --warn:#b45309; --border:#e5e7eb; --shadow:0 10px 25px rgba(15,23,42,.08);
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
@@ -27,24 +17,14 @@
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans"}
     .page{display:flex;flex-direction:column;min-height:100%}
 
-    /* Topbar */
-    .topbar{
-      display:flex;justify-content:space-between;align-items:center;
-      padding:16px 20px;background:#ffffff;border-bottom:1px solid var(--border);
-      position:sticky;top:0;z-index:10;
-    }
+    .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
     .brand{font-weight:800;letter-spacing:.2px;color:var(--accent)}
     .subtitle{color:var(--muted)}
 
-    /* KPIs */
     .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:20px}
-    .card{
-      background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;
-      box-shadow:var(--shadow)
-    }
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
     .card-title{color:var(--muted);font-size:14px}
     .card-value{font-size:42px;font-weight:900;margin-top:8px;text-shadow:0 1px 0 rgba(29,78,216,.12)}
-    /* variações de cor para totalizadores */
     .variant-total{border-top:4px solid var(--accent)}
     .variant-total .card-value{color:var(--accent)}
     .variant-preparo{border-top:4px solid var(--info); background:linear-gradient(0deg,#f4f8ff, #ffffff)}
@@ -52,52 +32,36 @@
     .variant-saida{border-top:4px solid var(--ship); background:linear-gradient(0deg,#f0fbff, #ffffff)}
     .variant-saida .card-value{color:var(--ship)}
 
-    /* Tabela */
     .table-wrap{padding:0 20px 20px}
     .table-title{margin:6px 0 10px;color:var(--muted)}
-    table{
-      width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);
-      border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)
-    }
+    table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
     th,td{padding:14px 16px;border-bottom:1px solid var(--border);text-align:left}
-    thead th{
-      color:#334155;background:var(--accent-soft);font-weight:700;border-bottom:1px solid #dbe4ff
-    }
+    thead th{color:#334155;background:var(--accent-soft);font-weight:700;border-bottom:1px solid #dbe4ff}
     tbody tr{cursor:pointer}
     tbody tr:hover{background:#f8fbff}
     tbody tr:last-child td{border-bottom:none}
     .qtd{text-align:center}
 
-    /* Linha de detalhes ("cascata") */
-    .details-row td{
-      background:#f8fbff;border-top:1px solid #dbeafe;border-bottom:1px solid #dbeafe
-    }
-    .details{
-      display:grid;grid-template-columns:2fr 2fr 1.3fr;gap:14px;align-items:start;
-      padding:6px 2px;color:#0f172a
-    }
+    .details-row td{background:#f8fbff;border-top:1px solid #dbeafe;border-bottom:1px solid #dbeafe}
+    .details{display:grid;grid-template-columns:2fr 2fr 1.3fr;gap:14px;align-items:start;padding:6px 2px;color:#0f172a}
     .details .label{color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
     .details .value{font-weight:600}
 
-    /* Badges (status) */
     .badge{padding:6px 12px;border-radius:999px;border:1px solid;font-size:12px;font-weight:600;background:#fff}
     .ok{color:var(--ok);border-color:rgba(22,163,74,.35);background:#ecfdf5}
     .warn{color:var(--warn);border-color:rgba(180,83,9,.30);background:#fff7ed}
     .info{color:var(--info);border-color:rgba(37,99,235,.35);background:#eff6ff}
     .ship{color:var(--ship);border-color:rgba(8,145,178,.35);background:#ecfeff}
 
-    /* Rodapé */
-    .footer{
-      margin-top:auto;padding:14px 20px;color:var(--muted);
-      border-top:1px solid var(--border);background:#ffffff
-    }
+    .footer{margin-top:auto;padding:14px 20px;color:var(--muted);border-top:1px solid var(--border);background:#ffffff}
+    .error{color:#b91c1c;font-weight:600}
   </style>
 </head>
 <body>
   <div class="page">
     <header class="topbar">
       <div class="brand">BTMonitor Desktop</div>
-      <div class="subtitle">Painel de pedidos — valores estáticos</div>
+      <div class="subtitle">Painel de pedidos — Google Sheets</div>
     </header>
 
     <section class="kpis">
@@ -125,140 +89,91 @@
         </thead>
         <tbody id="tbody-pedidos"></tbody>
       </table>
+      <div id="erro" class="table-title error" style="display:none;"></div>
     </section>
 
     <footer class="footer">
-      Próximo passo: integrar Google Sheets API e tornar os dados dinâmicos.
+      Próximo passo: escrita na planilha e filtros por status.
     </footer>
   </div>
 
   <script>
-    // Dados estáticos (com detalhes para a "cascata")
-    const pedidosFixos = [
-      {
-        hora: "11:02",
-        cliente: "Maria S.",
-        item: "Pizza Calabresa",
-        qtd: 1,
-        status: "Em preparo",
-        local: "Rua das Flores, 123 - Centro",
-        observacao: "Sem cebola",
-        contato: "(47) 9 9876-1234"
-      },
-      {
-        hora: "11:05",
-        cliente: "João P.",
-        item: "Hambúrguer BT",
-        qtd: 2,
-        status: "Pronto",
-        local: "Av. Brasil, 800 - Sala 402",
-        observacao: "",
-        contato: "(47) 9 9123-0000"
-      },
-      {
-        hora: "11:12",
-        cliente: "Ana R.",
-        item: "Suco Laranja",
-        qtd: 3,
-        status: "Saiu para entrega",
-        local: "Rua Ipê Amarelo, 55 - Bairro Jardim",
-        observacao: "Deixar na portaria",
-        contato: "(47) 9 9988-7777"
-      },
-      {
-        hora: "11:18",
-        cliente: "Carlos M.",
-        item: "Combo Executivo",
-        qtd: 1,
-        status: "Em preparo",
-        local: "Rua das Palmeiras, 200 - Apto 801",
-        observacao: "",
-        contato: "(47) 9 9000-1111"
-      },
-      {
-        hora: "11:27",
-        cliente: "Patrícia L.",
-        item: "Sushi 12 peças",
-        qtd: 1,
-        status: "Saiu para entrega",
-        local: "Av. Beira Rio, 1450 - Bloco B",
-        observacao: "Atenção ao portão lateral",
-        contato: "(47) 9 9555-2222"
-      }
-    ];
+    let dataset = [];
 
     function badgeClass(status){
       if(status === "Saiu para entrega") return "badge ship";
       if(status === "Em preparo") return "badge warn";
       if(status === "Pronto") return "badge info";
-      return "badge"; // fallback
+      return "badge";
     }
+    const safe = (v) => v && String(v).trim() ? v : "—";
 
-    function safe(v){ return v && String(v).trim() ? v : "—"; }
-
-    function closeAnyOpenDetails(){
-      document.querySelectorAll(".details-row").forEach(r => r.remove());
-    }
-
-    function toggleDetails(tr, pedido){
+    function closeAnyOpenDetails(){ document.querySelectorAll(".details-row").forEach(r => r.remove()); }
+    function toggleDetails(tr, p){
       const next = tr.nextElementSibling;
-      if(next && next.classList.contains("details-row")){
-        next.remove();
-        return;
-      }
-      // fecha outras cascatas, mantendo só uma aberta
+      if(next && next.classList.contains("details-row")){ next.remove(); return; }
       closeAnyOpenDetails();
-
       const detailsTr = document.createElement("tr");
       detailsTr.className = "details-row";
       const td = document.createElement("td");
       td.colSpan = 5;
       td.innerHTML = `
         <div class="details">
-          <div>
-            <div class="label">Local da entrega</div>
-            <div class="value">${safe(pedido.local)}</div>
-          </div>
-          <div>
-            <div class="label">Observação</div>
-            <div class="value">${safe(pedido.observacao)}</div>
-          </div>
-          <div>
-            <div class="label">Contato</div>
-            <div class="value">${safe(pedido.contato)}</div>
-          </div>
-        </div>
-      `;
+          <div><div class="label">Local da entrega</div><div class="value">${safe(p.local)}</div></div>
+          <div><div class="label">Observação</div><div class="value">${safe(p.observacao)}</div></div>
+          <div><div class="label">Contato</div><div class="value">${safe(p.contato)}</div></div>
+        </div>`;
       detailsTr.appendChild(td);
       tr.insertAdjacentElement("afterend", detailsTr);
     }
 
     function render(){
-      const totalHoje = 27; // Exemplo
-      const emPreparo = pedidosFixos.filter(p => p.status === "Em preparo").length;
-      const saiuEntrega = pedidosFixos.filter(p => p.status === "Saiu para entrega").length;
+      dataset.sort((a,b) => new Date(b.horaRaw||0) - new Date(a.horaRaw||0));
+      const hoje = new Date().toDateString();
+      const doDia = dataset.filter(p => (new Date(p.horaRaw||0)).toDateString() === hoje);
 
-      document.getElementById("kpi-total").textContent = totalHoje;
-      document.getElementById("kpi-preparo").textContent = emPreparo;
-      document.getElementById("kpi-saida").textContent = saiuEntrega;
+      document.getElementById("kpi-total").textContent   = doDia.length;
+      document.getElementById("kpi-preparo").textContent = doDia.filter(p => p.status === "Em preparo").length;
+      document.getElementById("kpi-saida").textContent   = doDia.filter(p => p.status === "Saiu para entrega").length;
 
       const tbody = document.getElementById("tbody-pedidos");
       tbody.innerHTML = "";
-      pedidosFixos.forEach((p) => {
+      dataset.forEach((p) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${p.hora}</td>
-          <td>${p.cliente}</td>
-          <td>${p.item}</td>
-          <td class="qtd">${p.qtd}</td>
-          <td><span class="${badgeClass(p.status)}">${p.status}</span></td>
+          <td>${safe(p.hora)}</td>
+          <td>${safe(p.cliente)}</td>
+          <td>${safe(p.item)}</td>
+          <td class="qtd">${safe(p.qtd)}</td>
+          <td><span class="${badgeClass(p.status)}">${safe(p.status)}</span></td>
         `;
         tr.addEventListener("click", () => toggleDetails(tr, p));
         tbody.appendChild(tr);
       });
     }
 
-    render();
+    async function carregar(){
+      const elErro = document.getElementById('erro');
+      elErro.style.display = 'none';
+      try {
+        if (!window.api || typeof window.api.getPedidos !== 'function') {
+          throw new Error('Bridge do preload não disponível. Verifique src/preload.js e webPreferences.preload.');
+        }
+        const res = await window.api.getPedidos();
+        if (res?.ok) {
+          dataset = Array.isArray(res.data) ? res.data : [];
+        } else {
+          throw new Error(res?.error || 'Falha ao carregar planilha');
+        }
+      } catch (e) {
+        elErro.textContent = `Erro no renderer: ${e?.message || e}`;
+        elErro.style.display = 'block';
+      }
+      render();
+    }
+
+    carregar();
+    setInterval(carregar, 10000);
   </script>
 </body>
 </html>

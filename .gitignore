@@ -4,6 +4,9 @@
 # Arquivos gerados pelo build do Electron Forge (essencial ignorar)
 /out
 
+#Serviço 
+/service-account.json
+
 # Arquivos de log do npm e yarn
 npm-debug.log*
 yarn-debug.log*
