@@ -32,29 +32,27 @@
     .variant-saida{border-top:4px solid var(--ship); background:linear-gradient(0deg,#f0fbff, #ffffff)}
     .variant-saida .card-value{color:var(--ship)}
 
-    .table-wrap{padding:0 20px 20px}
+    .table-wrap{padding:0 20px 24px}
     .table-title{margin:6px 0 10px;color:var(--muted)}
     table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
-    th,td{padding:14px 16px;border-bottom:1px solid var(--border);text-align:left}
+    th,td{padding:14px 16px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
     thead th{color:#334155;background:var(--accent-soft);font-weight:700;border-bottom:1px solid #dbe4ff}
-    tbody tr{cursor:pointer}
     tbody tr:hover{background:#f8fbff}
     tbody tr:last-child td{border-bottom:none}
+    .subrow td{background:#f8fbff;border-top:1px solid #dbeafe}
+    .muted{color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+    .value-strong{font-weight:700}
     .qtd{text-align:center}
-
-    .details-row td{background:#f8fbff;border-top:1px solid #dbeafe;border-bottom:1px solid #dbeafe}
-    .details{display:grid;grid-template-columns:2fr 2fr 1.3fr;gap:14px;align-items:start;padding:6px 2px;color:#0f172a}
-    .details .label{color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-    .details .value{font-weight:600}
-
-    .badge{padding:6px 12px;border-radius:999px;border:1px solid;font-size:12px;font-weight:600;background:#fff}
-    .ok{color:var(--ok);border-color:rgba(22,163,74,.35);background:#ecfdf5}
-    .warn{color:var(--warn);border-color:rgba(180,83,9,.30);background:#fff7ed}
-    .info{color:var(--info);border-color:rgba(37,99,235,.35);background:#eff6ff}
-    .ship{color:var(--ship);border-color:rgba(8,145,178,.35);background:#ecfeff}
-
     .footer{margin-top:auto;padding:14px 20px;color:var(--muted);border-top:1px solid var(--border);background:#ffffff}
     .error{color:#b91c1c;font-weight:600}
+
+    /* seletor de status com aparência de badge */
+    .status-select{
+      appearance:none;-webkit-appearance:none;-moz-appearance:none;
+      border:1px solid rgba(37,99,235,.35); border-radius:999px; background:#eff6ff; color:#2563eb;
+      padding:6px 28px 6px 12px; font-weight:700; font-size:12px; cursor:pointer;
+    }
+    .status-select:disabled{opacity:.6;cursor:not-allowed}
   </style>
 </head>
 <body>
@@ -66,7 +64,7 @@
 
     <section class="kpis">
       <div class="card variant-total">
-        <div class="card-title">Pedidos hoje</div>
+        <div class="card-title">Pedidos finalizados</div>
         <div id="kpi-total" class="card-value">0</div>
       </div>
       <div class="card variant-preparo">
@@ -81,10 +79,16 @@
 
     <section class="table-wrap">
       <div class="table-title">Fila de pedidos</div>
+      <div id="info" class="table-title" style="display:none;color:#475569"></div>
       <table>
         <thead>
           <tr>
-            <th>Hora</th><th>Cliente</th><th>Item</th><th>Qtd</th><th>Status</th>
+            <th>Hora</th>
+            <th>Cliente</th>
+            <th>Item</th>
+            <th>Qtd</th>
+            <th>Contato</th>
+            <th>Status</th> <!-- agora é o último da linha -->
           </tr>
         </thead>
         <tbody id="tbody-pedidos"></tbody>
@@ -93,78 +97,156 @@
     </section>
 
     <footer class="footer">
-      Próximo passo: escrita na planilha e filtros por status.
+      Próximo passo: escrita de observações/novos pedidos diretamente do desktop.
     </footer>
   </div>
 
   <script>
+    // ===== Parâmetros =====
+    const APENAS_HOJE   = true;       // mostrar só pedidos do dia
+    const MODO_DIA      = 'local';    // 'local' ou 'utc'
+    const FALLBACK_ULTIMOS = 20;      // quando não houver itens do dia, mostrar últimos N (em andamento)
+
     let dataset = [];
 
-    function badgeClass(status){
-      if(status === "Saiu para entrega") return "badge ship";
-      if(status === "Em preparo") return "badge warn";
-      if(status === "Pronto") return "badge info";
-      return "badge";
-    }
-    const safe = (v) => v && String(v).trim() ? v : "—";
+    // ---------- Helpers ----------
+    const safe = (v) => v && String(v).trim() ? v : '—';
 
-    function closeAnyOpenDetails(){ document.querySelectorAll(".details-row").forEach(r => r.remove()); }
-    function toggleDetails(tr, p){
-      const next = tr.nextElementSibling;
-      if(next && next.classList.contains("details-row")){ next.remove(); return; }
-      closeAnyOpenDetails();
-      const detailsTr = document.createElement("tr");
-      detailsTr.className = "details-row";
-      const td = document.createElement("td");
-      td.colSpan = 5;
-      td.innerHTML = `
-        <div class="details">
-          <div><div class="label">Local da entrega</div><div class="value">${safe(p.local)}</div></div>
-          <div><div class="label">Observação</div><div class="value">${safe(p.observacao)}</div></div>
-          <div><div class="label">Contato</div><div class="value">${safe(p.contato)}</div></div>
-        </div>`;
-      detailsTr.appendChild(td);
-      tr.insertAdjacentElement("afterend", detailsTr);
+    function isHojeLocal(iso){
+      const d = new Date(iso || 0);
+      return d.toDateString() === new Date().toDateString();
+    }
+    function isHojeUTC(iso){
+      const s = String(iso || '');
+      return s.slice(0,10) === new Date().toISOString().slice(0,10);
+    }
+    function filtraHoje(rows){
+      const fn = (MODO_DIA === 'utc') ? isHojeUTC : isHojeLocal;
+      return rows.filter(p => p.horaRaw && fn(p.horaRaw));
     }
 
+    // ---------- Renderização ----------
     function render(){
-      dataset.sort((a,b) => new Date(b.horaRaw||0) - new Date(a.horaRaw||0));
-      const hoje = new Date().toDateString();
-      const doDia = dataset.filter(p => (new Date(p.horaRaw||0)).toDateString() === hoje);
+      // Ordena por mais recente
+      const ordenado = [...dataset].sort((a,b) => new Date(b.horaRaw||0) - new Date(a.horaRaw||0));
 
-      document.getElementById("kpi-total").textContent   = doDia.length;
-      document.getElementById("kpi-preparo").textContent = doDia.filter(p => p.status === "Em preparo").length;
-      document.getElementById("kpi-saida").textContent   = doDia.filter(p => p.status === "Saiu para entrega").length;
+      // Conjunto do dia (para KPIs)
+      const doDia = filtraHoje(dataset);
 
-      const tbody = document.getElementById("tbody-pedidos");
-      tbody.innerHTML = "";
-      dataset.forEach((p) => {
-        const tr = document.createElement("tr");
+      // KPIs
+      const finalizadosHoje = doDia.filter(p => p.status === 'Pronto').length;
+      const emPreparoHoje   = doDia.filter(p => p.status === 'Em preparo').length;
+      const saiuHoje        = doDia.filter(p => p.status === 'Saiu para entrega').length;
+
+      document.getElementById('kpi-total').textContent   = finalizadosHoje; // Pedidos finalizados
+      document.getElementById('kpi-preparo').textContent = emPreparoHoje;
+      document.getElementById('kpi-saida').textContent   = saiuHoje;
+
+      // Fila visível = pedidos em andamento (exclui "Pronto")
+      const apenasAndamento = (rows) => rows.filter(p => p.status !== 'Pronto');
+
+      let visiveis = APENAS_HOJE ? apenasAndamento(filtraHoje(ordenado)) : apenasAndamento(ordenado);
+
+      const info = document.getElementById('info');
+      if (APENAS_HOJE && visiveis.length === 0) {
+        visiveis = apenasAndamento(ordenado).slice(0, FALLBACK_ULTIMOS);
+        if (info) {
+          info.style.display = 'block';
+          info.textContent = `Nenhum pedido em andamento hoje (${MODO_DIA.toUpperCase()}). Exibindo os ${FALLBACK_ULTIMOS} mais recentes em andamento.`;
+        }
+      } else if (info) {
+        info.style.display = 'none';
+        info.textContent = '';
+      }
+
+      // Monta a tabela
+      const tbody = document.getElementById('tbody-pedidos');
+      tbody.innerHTML = '';
+      visiveis.forEach((p) => {
+        const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${safe(p.hora)}</td>
           <td>${safe(p.cliente)}</td>
           <td>${safe(p.item)}</td>
           <td class="qtd">${safe(p.qtd)}</td>
-          <td><span class="${badgeClass(p.status)}">${safe(p.status)}</span></td>
+          <td>${safe(p.contato)}</td>
+          <td>
+            <select class="status-select" data-row="${p.rowNumber}" data-title="${p.sheetTitle||''}">
+              <option value="1" ${p.statusCode==='1'?'selected':''}>Em preparo</option>
+              <option value="2" ${p.statusCode==='2'?'selected':''}>Saiu para entrega</option>
+              <option value="3" ${p.statusCode==='3'?'selected':''}>Pronto</option>
+            </select>
+          </td>
         `;
-        tr.addEventListener("click", () => toggleDetails(tr, p));
         tbody.appendChild(tr);
+
+        const tr2 = document.createElement('tr');
+        tr2.className = 'subrow';
+        tr2.innerHTML = `
+          <td colspan="6">
+            <div style="display:grid;grid-template-columns:2fr 2fr 1fr;gap:16px">
+              <div>
+                <div class="muted">Endereço</div>
+                <div class="value-strong">${safe(p.local)}</div>
+              </div>
+              <div>
+                <div class="muted">Observação</div>
+                <div class="value-strong">${safe(p.observacao)}</div>
+              </div>
+              <div>
+                <div class="muted">Valor total</div>
+                <div class="value-strong">${safe(p.valor)}</div>
+              </div>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr2);
       });
     }
 
+    // ---------- Atualização de status ----------
+    async function onChangeStatus(e){
+      if (!e.target.matches('.status-select')) return;
+      const el = e.target;
+      const row = Number(el.dataset.row);
+      const title = el.dataset.title || '';
+      const newCode = String(el.value);
+
+      el.disabled = true;
+      try{
+        if (!window.api || typeof window.api.updateStatus !== 'function') {
+          throw new Error('Bridge do preload indisponível (updateStatus).');
+        }
+        const resp = await window.api.updateStatus(row, newCode, title);
+        if (!resp?.ok) throw new Error(resp?.error || 'Falha ao atualizar status.');
+
+        // Atualiza dataset localmente e re-renderiza
+        const idx = dataset.findIndex(p => p.rowNumber === row);
+        if (idx >= 0) {
+          dataset[idx].statusCode = newCode;
+          dataset[idx].status = (newCode==='1' ? 'Em preparo' : newCode==='2' ? 'Saiu para entrega' : 'Pronto');
+        }
+        render(); // ao virar "Pronto", some da fila e os KPIs são recalculados
+      } catch(err){
+        const elErro = document.getElementById('erro');
+        elErro.textContent = `Erro ao atualizar status: ${err?.message || err}`;
+        elErro.style.display = 'block';
+      } finally {
+        el.disabled = false;
+      }
+    }
+
+    // ---------- Carregar dados ----------
     async function carregar(){
       const elErro = document.getElementById('erro');
       elErro.style.display = 'none';
       try {
         if (!window.api || typeof window.api.getPedidos !== 'function') {
-          throw new Error('Bridge do preload não disponível. Verifique src/preload.js e webPreferences.preload.');
+          throw new Error('Bridge do preload indisponível (getPedidos). Verifique src/preload.js e webPreferences.preload.');
         }
         const res = await window.api.getPedidos();
-        if (res?.ok) {
-          dataset = Array.isArray(res.data) ? res.data : [];
-        } else {
-          throw new Error(res?.error || 'Falha ao carregar planilha');
-        }
+        if (res?.ok) dataset = Array.isArray(res.data) ? res.data : [];
+        else throw new Error(res?.error || 'Falha ao carregar planilha');
       } catch (e) {
         elErro.textContent = `Erro no renderer: ${e?.message || e}`;
         elErro.style.display = 'block';
@@ -172,6 +254,7 @@
       render();
     }
 
+    document.getElementById('tbody-pedidos').addEventListener('change', onChangeStatus);
     carregar();
     setInterval(carregar, 10000);
   </script>
