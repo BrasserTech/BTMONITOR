@@ -2,6 +2,7 @@
   "name": "btmonitor-desktop",
   "productName": "BTMonitor Desktop",
   "version": "1.0.0",
+  "author": "Paulo",
   "description": "Monitor de desktop para pedidos do Google Sheets.",
   "main": "src/main.js",
   "scripts": {
