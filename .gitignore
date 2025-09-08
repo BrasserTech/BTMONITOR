@@ -1,17 +1,42 @@
-# Dependências do Node.js (essencial ignorar)
-/node_modules
-
-# Arquivos gerados pelo build do Electron Forge (essencial ignorar)
-/out
-
-#Serviço 
-/service-account.json
-
-# Arquivos de log do npm e yarn
+# Node
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Arquivos de variáveis de ambiente locais (segurança)
+# Variáveis de ambiente (segurança)
 .env.local
 .env
+!.env.example
+
+# Credenciais locais (segurança)
+service-account.json
+
+# Saídas de build (Electron Forge/Builder)
+dist/
+release/
+out/
+.webpack/
+
+# Artefatos do builder que às vezes aparecem na raiz
+builder-debug.yml
+latest*.yml
+*.blockmap
+
+# Artefatos por plataforma (caso surjam)
+*.zip
+*.tar.*
+*.7z
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.snap
+*.deb
+*.rpm
+
+# IDEs / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

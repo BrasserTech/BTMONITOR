@@ -11,10 +11,14 @@
     "start": "electron-forge start",
     "make": "electron-forge make",
     "package": "electron-forge package",
-    "clean": "rimraf -g \"dist/**\" \"out/**\"",
+
+    "clean": "rimraf -g \"dist/*.exe\" \"dist/*.yml\" \"dist/*.blockmap\" \"release/*.exe\" \"out/**\"",
+
     "build": "npx electron-builder",
-    "prebuild:portable": "rimraf -g \"dist/*.exe\" \"dist/portable/**\"",
-    "build:portable": "npm run prebuild:portable && npx electron-builder --win portable -c.directories.output=dist/portable",
+
+    "prebuild:portable": "rimraf -g \"dist/*.exe\" \"release/*.exe\"",
+    "build:portable": "npm run prebuild:portable && npx electron-builder --win portable",
+
     "build:dir": "npx electron-builder --dir"
   },
   "devDependencies": {
@@ -36,16 +40,10 @@
     "compression": "maximum",
     "asar": true,
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
-      {
-        "from": "src",
-        "to": ".",
-        "filter": [
-          "**/*"
-        ]
-      },
+      { "from": "src", "to": ".", "filter": ["**/*"] },
       "node_modules/**/*",
       "package.json",
       ".env.local",
@@ -53,36 +51,23 @@
       "!**/*.map",
       "!.git/**/*",
       "!dist/**/*",
-      "!out/**/*"
+      "!out/**/*",
+      "!release/**/*"
     ],
     "extraMetadata": {
       "main": "main.js"
     },
     "win": {
-      "target": [
-        "portable"
-      ],
+      "target": ["portable"],
       "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
     }
   },
   "config": {
     "forge": {
-      "packagerConfig": {
-        "asar": true
-      },
+      "packagerConfig": { "asar": true },
       "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "btmonitor_desktop"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "win32"
-          ]
-        }
+        { "name": "@electron-forge/maker-squirrel", "config": { "name": "btmonitor_desktop" } },
+        { "name": "@electron-forge/maker-zip", "platforms": ["win32"] }
       ]
     }
   }

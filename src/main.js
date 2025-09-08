@@ -18,18 +18,14 @@ function firstExisting(candidates) {
 }
 
 function loadDotenv() {
-  // Em produção, app.getAppPath() aponta para resources/app.asar
   const appPath = (() => {
     try { return app.getAppPath(); } catch { return null; }
   })();
 
   const candidates = [
-    // Produção (dentro do pacote)
     appPath && path.join(appPath, '.env.local'),
-    // Alternativas comuns em produção
     process.resourcesPath && path.join(process.resourcesPath, 'app', '.env.local'),
     process.resourcesPath && path.join(process.resourcesPath, '.env.local'),
-    // Desenvolvimento
     path.join(__dirname, '.env.local'),
     path.join(__dirname, '..', '.env.local'),
     path.join(process.cwd(), '.env.local'),
@@ -40,7 +36,7 @@ function loadDotenv() {
     dotenv.config({ path: envFile });
     console.log('[ENV] Carregado de:', envFile);
   } else {
-    console.warn('[ENV] .env.local não encontrado. Variáveis de ambiente podem estar ausentes.');
+    console.warn('[ENV] .env.local não encontrado. Variáveis podem estar ausentes.');
   }
   return envFile;
 }
@@ -48,11 +44,9 @@ function loadDotenv() {
 function resolveCredentialFile() {
   const appPath = (() => { try { return app.getAppPath(); } catch { return null; } })();
   const candidates = [
-    // Produção (empacotado)
     appPath && path.join(appPath, 'service-account.json'),
     process.resourcesPath && path.join(process.resourcesPath, 'app', 'service-account.json'),
     process.resourcesPath && path.join(process.resourcesPath, 'service-account.json'),
-    // Desenvolvimento
     path.join(__dirname, 'service-account.json'),
     path.join(__dirname, '..', 'service-account.json'),
     path.join(process.cwd(), 'service-account.json'),
@@ -68,28 +62,45 @@ function resolveCredentialFile() {
    ========================= */
 loadDotenv();
 
-// IDs/parametrizações da planilha
+// Planilha
 const SHEET_ID    = process.env.GOOGLE_SHEET_ID;
 const SHEET_RANGE = process.env.GOOGLE_SHEET_RANGE || 'Página2!A2:H';
 const SHEET_GID   = process.env.GOOGLE_SHEET_GID || null; // opcional
 
+// Correção de fuso (minutos). Padrão 180 = UTC-3 (Brasília).
+const TZ_FIX_MIN = Number.isFinite(Number(process.env.TZ_FIX_MIN))
+  ? Number(process.env.TZ_FIX_MIN)
+  : 180;
+
 /* =========================
-   Helpers de domínio
+   Helpers de tempo e domínio
    ========================= */
+// Aplica correção de fuso SOMENTE quando a string possui timezone explícito (Z ou ±hh:mm)
+function parseDateWithFix(iso) {
+  if (!iso) return null;
+  const s = String(iso);
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return null;
+
+  const hasTZ = /Z|[+-]\d{2}:\d{2}$/.test(s);
+  if (hasTZ && TZ_FIX_MIN) {
+    return new Date(d.getTime() + TZ_FIX_MIN * 60 * 1000);
+  }
+  return d;
+}
+
+function formatHoraLocalFromISO(iso) {
+  const d = parseDateWithFix(iso);
+  if (!d) return '—';
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
 function mapStatus(cod) {
   const s = String(cod ?? '').trim();
   if (s === '1') return 'Em preparo';
   if (s === '2') return 'Saiu para entrega';
   if (s === '3') return 'Pronto';
   return s || '—';
-}
-
-function horaLocal(iso) {
-  const d = new Date(iso);
-  if (!isNaN(d)) {
-    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  }
-  return '—';
 }
 
 function titleFromRange(range) {
@@ -104,7 +115,7 @@ async function getSheetsClient() {
   const keyFilePath = resolveCredentialFile();
   const auth = new google.auth.GoogleAuth({
     keyFile: keyFilePath,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'], // leitura + escrita
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
   return google.sheets({ version: 'v4', auth });
 }
@@ -143,10 +154,16 @@ async function fetchFromSheet() {
   // Colunas: A Data/Hora | B Cliente | C Pedido | D Observações | E Valor total | F Status | G Endereço | H Contato
   return rows.map((r, i) => {
     const [dataHora, nome, pedido, obs, valorTotal, statusCod, endereco, contato] = r;
+
+    // Ajuste de fuso: gera um Date corrigido (quando necessário)
+    const dAdj = parseDateWithFix(dataHora);
+    const horaStr = dAdj ? dAdj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—';
+    const horaRawISO = dAdj ? dAdj.toISOString() : null; // usado no filtro no renderer
+
     return {
-      rowNumber: i + 2, // A2 => linha 2
-      hora: horaLocal(dataHora),
-      horaRaw: dataHora || null,
+      rowNumber: i + 2,              // A2 => linha 2
+      hora: horaStr,                 // exibição
+      horaRaw: horaRawISO,           // base para filtros "hoje" no renderer
       cliente: nome || '—',
       item: (pedido && String(pedido).trim()) ? pedido : '—',
       qtd: 1,
@@ -185,7 +202,6 @@ async function updateStatus(rowNumber, newStatusCode, sheetTitleArg) {
    Electron (janela / lifecycle)
    ========================= */
 function createWindow() {
-  // Se o main.js estiver na mesma pasta do index.html e preload.js, __dirname funciona em dev e em produção
   const preloadPath = path.join(__dirname, 'preload.js');
   const indexPath = path.join(__dirname, 'index.html');
 
