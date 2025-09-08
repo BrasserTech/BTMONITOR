@@ -64,3 +64,9 @@ npm start
 
 Para gerar a build
 npm run make
+
+
+gerar portable
+npm run clean
+npm install
+npm run build:portable

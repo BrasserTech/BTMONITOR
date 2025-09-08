@@ -4,21 +4,86 @@
   "version": "1.0.0",
   "author": "Paulo",
   "description": "Monitor de desktop para pedidos do Google Sheets.",
-  "main": "src/main.js",
+  "private": true,
+  "license": "MIT",
+  "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
     "make": "electron-forge make",
-    "package": "electron-forge package"
+    "package": "electron-forge package",
+    "clean": "rimraf -g \"dist/**\" \"out/**\"",
+    "build": "npx electron-builder",
+    "prebuild:portable": "rimraf -g \"dist/*.exe\" \"dist/portable/**\"",
+    "build:portable": "npm run prebuild:portable && npx electron-builder --win portable -c.directories.output=dist/portable",
+    "build:dir": "npx electron-builder --dir"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.2.0",
     "@electron-forge/maker-zip": "^7.2.0",
     "@electron-forge/maker-squirrel": "^7.2.0",
-    "electron": "^28.1.0"
+    "electron": "^28.1.0",
+    "electron-builder": "^24.13.3",
+    "rimraf": "^5.0.5"
   },
   "dependencies": {
     "dotenv": "^16.3.1",
     "googleapis": "^131.0.0",
     "electron-squirrel-startup": "^1.0.0"
+  },
+  "build": {
+    "appId": "com.brassertech.btmonitor",
+    "productName": "BTMonitor Desktop",
+    "compression": "maximum",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      {
+        "from": "src",
+        "to": ".",
+        "filter": [
+          "**/*"
+        ]
+      },
+      "node_modules/**/*",
+      "package.json",
+      ".env.local",
+      "service-account.json",
+      "!**/*.map",
+      "!.git/**/*",
+      "!dist/**/*",
+      "!out/**/*"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
+    }
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "asar": true
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "btmonitor_desktop"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "win32"
+          ]
+        }
+      ]
+    }
   }
 }

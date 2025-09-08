@@ -43,7 +43,7 @@
     .muted{color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
     .value-strong{font-weight:700}
     .qtd{text-align:center}
-    .footer{margin-top:auto;padding:14px 20px;color:var(--muted);border-top:1px solid var(--border);background:#ffffff}
+
     .error{color:#b91c1c;font-weight:600}
 
     /* seletor de status com aparência de badge */
@@ -88,30 +88,25 @@
             <th>Item</th>
             <th>Qtd</th>
             <th>Contato</th>
-            <th>Status</th> <!-- agora é o último da linha -->
+            <th>Status</th>
           </tr>
         </thead>
         <tbody id="tbody-pedidos"></tbody>
       </table>
       <div id="erro" class="table-title error" style="display:none;"></div>
     </section>
-
-    <footer class="footer">
-      Próximo passo: escrita de observações/novos pedidos diretamente do desktop.
-    </footer>
   </div>
 
   <script>
-    // ===== Parâmetros =====
-    const APENAS_HOJE   = true;       // mostrar só pedidos do dia
+    // Parâmetros
+    const APENAS_HOJE   = true;
     const MODO_DIA      = 'local';    // 'local' ou 'utc'
-    const FALLBACK_ULTIMOS = 20;      // quando não houver itens do dia, mostrar últimos N (em andamento)
+    const FALLBACK_ULTIMOS = 20;
 
     let dataset = [];
 
-    // ---------- Helpers ----------
+    // Helpers
     const safe = (v) => v && String(v).trim() ? v : '—';
-
     function isHojeLocal(iso){
       const d = new Date(iso || 0);
       return d.toDateString() === new Date().toDateString();
@@ -125,24 +120,19 @@
       return rows.filter(p => p.horaRaw && fn(p.horaRaw));
     }
 
-    // ---------- Renderização ----------
+    // Render
     function render(){
-      // Ordena por mais recente
       const ordenado = [...dataset].sort((a,b) => new Date(b.horaRaw||0) - new Date(a.horaRaw||0));
-
-      // Conjunto do dia (para KPIs)
       const doDia = filtraHoje(dataset);
 
-      // KPIs
       const finalizadosHoje = doDia.filter(p => p.status === 'Pronto').length;
       const emPreparoHoje   = doDia.filter(p => p.status === 'Em preparo').length;
       const saiuHoje        = doDia.filter(p => p.status === 'Saiu para entrega').length;
 
-      document.getElementById('kpi-total').textContent   = finalizadosHoje; // Pedidos finalizados
+      document.getElementById('kpi-total').textContent   = finalizadosHoje;
       document.getElementById('kpi-preparo').textContent = emPreparoHoje;
       document.getElementById('kpi-saida').textContent   = saiuHoje;
 
-      // Fila visível = pedidos em andamento (exclui "Pronto")
       const apenasAndamento = (rows) => rows.filter(p => p.status !== 'Pronto');
 
       let visiveis = APENAS_HOJE ? apenasAndamento(filtraHoje(ordenado)) : apenasAndamento(ordenado);
@@ -159,7 +149,6 @@
         info.textContent = '';
       }
 
-      // Monta a tabela
       const tbody = document.getElementById('tbody-pedidos');
       tbody.innerHTML = '';
       visiveis.forEach((p) => {
@@ -204,7 +193,7 @@
       });
     }
 
-    // ---------- Atualização de status ----------
+    // Atualização de status
     async function onChangeStatus(e){
       if (!e.target.matches('.status-select')) return;
       const el = e.target;
@@ -220,13 +209,12 @@
         const resp = await window.api.updateStatus(row, newCode, title);
         if (!resp?.ok) throw new Error(resp?.error || 'Falha ao atualizar status.');
 
-        // Atualiza dataset localmente e re-renderiza
         const idx = dataset.findIndex(p => p.rowNumber === row);
         if (idx >= 0) {
           dataset[idx].statusCode = newCode;
           dataset[idx].status = (newCode==='1' ? 'Em preparo' : newCode==='2' ? 'Saiu para entrega' : 'Pronto');
         }
-        render(); // ao virar "Pronto", some da fila e os KPIs são recalculados
+        render();
       } catch(err){
         const elErro = document.getElementById('erro');
         elErro.textContent = `Erro ao atualizar status: ${err?.message || err}`;
@@ -236,7 +224,7 @@
       }
     }
 
-    // ---------- Carregar dados ----------
+    // Carregar dados
     async function carregar(){
       const elErro = document.getElementById('erro');
       elErro.style.display = 'none';
